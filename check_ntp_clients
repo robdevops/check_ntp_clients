@@ -3,20 +3,25 @@
 
 // requires monitor enabled in ntp.conf
 
-// Args
+$servers = array();
+$output = array();
+$fresh_clients = array();
+$stale_clients = array();
+
+// args
 $shortopts = "h";
 $longopts = array("ignore:", "help", "threshold:");
 $options = getopt($shortopts, $longopts);
-$ignore = [];
-$threshold = "172800"; // two days
+$threshold = "172800"; // two day default
 if ( isset($options['threshold']) ) {
 	$threshold = $options['threshold'];
 }
+$ignore = [];
 if ( isset($options['ignore']) ) {
 	$ignore = (array) $options["ignore"];
 }
 
-// Help
+// help
 if ( isset($options['h']) or isset($options['help']) ) {
 	$me = basename(__FILE__);
 	echo "Usage: $me [ OPTIONS ]
@@ -29,23 +34,31 @@ if ( isset($options['h']) or isset($options['help']) ) {
 }
 
 
-// Fetch statum 1 peers
-$peercommand = 'ntpdc -nc listpeers';
-exec( $peercommand, $peeroutput );
-$peers = array();
-foreach ( $peeroutput as $line ) {
-	$columns = preg_split( '/\s+/', trim($line) );
-	$peers[] = $columns[1];
+function fetch_ntp_servers() {
+	$command = 'ntpdc -nc listpeers';
+	exec( $command, $output );
+	foreach ( $output as $line ) {
+		$columns = preg_split( '/\s+/', trim($line) );
+		$servers[] = $columns[1];
+	}
+	return $servers;
+
+}
+
+function fetch_ntp_clients() {
+	$command = 'ntpdc -nc monlist';
+	exec( $command, $output );
+	return $output;
+
 }
 
 
-// Fetch clients
-$command = 'ntpdc -nc monlist';
-exec( $command, $output );
-$fresh_clients = array();
-$stale_clients = array();
+// run external commands
+$servers = fetch_ntp_servers();
+$output = fetch_ntp_clients();
 
-// Process clients
+
+// process clients
 foreach ( $output as $line ) {
 
 	// exclude headers
@@ -54,13 +67,13 @@ foreach ( $output as $line ) {
 		$client = $columns[0];
 		$seconds = $columns[8];
 	
-		// Exclude stratum 1 and ignore list
-	        if ( !in_array($client, $peers) and !in_array($client, $ignore) ) {
+		// exclude stratum 1 and ignore list
+	        if ( !in_array($client, $servers) and !in_array($client, $ignore) ) {
 	
 			// only clients above threshold
-			if ( $columns[8] > $threshold ) {
+			if ( $seconds > $threshold ) {
 	
-				// Only online clients
+				// only online clients
 				exec("ping -qc1 $client -W 1 2>/dev/null", $pingoutput, $pingreturn);
 				if ( $pingreturn == 0 ) {
 					$stale_clients += [ $client => $seconds ];
@@ -78,8 +91,7 @@ foreach ( $output as $line ) {
 
 }
 
-
-// Output
+// nagios output
 if ( empty($output) ) {
 	$return_status = 3;
 	print("UNKNOWN: Error fetching ntpdc monlist\n");
@@ -91,9 +103,9 @@ if ( empty($output) ) {
 } elseif ( count($stale_clients) ) {
 	$return_status = 1;
 	foreach ( $stale_clients as $key => $value) {
-		$clientstring = $key;
-		$secondsstring = $value;
-	    	printf("I have not heard from $clientstring in %d days %d hours %d minutes." . "\n", $secondsstring/3600/24, $secondsstring/3600, $secondsstring/60);
+		$client = $key;
+		$seconds = $value;
+	    	printf("I have not heard from $client in %d days %d hours %d minutes." . "\n", $seconds/86400, $seconds/3600, $seconds/60);
 	}
 	print("If this is ok, add the client to the ignore list (recommended), or restart ntpd to clear all known clients.\n");
 
