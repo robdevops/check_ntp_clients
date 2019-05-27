@@ -3,8 +3,10 @@
 
 ## Description   
 Warns about known clients we haven't heard from in a while.
+
 Uses `ntpdc -nc monlist` to query a list of clients and time since their last check-in.
-This requires "monitor" enabled in `/etc/ntp.conf`
+
+Requires "monitor" enabled in `/etc/ntp.conf`
 
 
 ## Dependencies
