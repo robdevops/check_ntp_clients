@@ -1,0 +1,107 @@
+#!/usr/bin/env php
+<?php
+
+// requires monitor enabled in ntp.conf
+
+// Args
+$shortopts = "h";
+$longopts = array("ignore:", "help", "threshold:");
+$options = getopt($shortopts, $longopts);
+$ignore = [];
+$threshold = "172800"; // two days
+if ( isset($options['threshold']) ) {
+	$threshold = $options['threshold'];
+}
+if ( isset($options['ignore']) ) {
+	$ignore = (array) $options["ignore"];
+}
+
+// Help
+if ( isset($options['h']) or isset($options['help']) ) {
+	$me = basename(__FILE__);
+	echo "Usage: $me [ OPTIONS ]
+	OPTIONS:
+	--ignore <ip address>
+	\tClient to ignore. Can be specified multiple times.
+	--threshold <seconds>
+	\tWarning threshold. Defaults to two days.\n";
+    exit(3);
+}
+
+
+// Fetch statum 1 peers
+$peercommand = 'ntpdc -nc listpeers';
+exec( $peercommand, $peeroutput );
+$peers = array();
+foreach ( $peeroutput as $line ) {
+	$columns = preg_split( '/\s+/', trim($line) );
+	$peers[] = $columns[1];
+}
+
+
+// Fetch clients
+$command = 'ntpdc -nc monlist';
+exec( $command, $output );
+$fresh_clients = array();
+$stale_clients = array();
+
+// Process clients
+foreach ( $output as $line ) {
+
+	// exclude headers
+	if ( preg_match("/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\s/", $line) ) {
+		$columns = preg_split( '/\s+/', trim($line) );
+		$client = $columns[0];
+		$seconds = $columns[8];
+	
+		// Exclude stratum 1 and ignore list
+	        if ( !in_array($client, $peers) and !in_array($client, $ignore) ) {
+	
+			// only clients above threshold
+			if ( $columns[8] > $threshold ) {
+	
+				// Only online clients
+				exec("ping -qc1 $client -W 1 2>/dev/null", $pingoutput, $pingreturn);
+				if ( $pingreturn == 0 ) {
+					$stale_clients += [ $client => $seconds ];
+	
+				}
+	
+			} else {
+				$fresh_clients[] = $client;
+	
+			}
+	
+		}
+
+	}
+
+}
+
+
+// Output
+if ( empty($output) ) {
+	$return_status = 3;
+	print("UNKNOWN: Error fetching ntpdc monlist\n");
+
+} elseif ( empty($fresh_clients) ) {
+	$return_status = 1;
+	print("WARNING: No known clients.\n");
+
+} elseif ( count($stale_clients) ) {
+	$return_status = 1;
+	foreach ( $stale_clients as $key => $value) {
+		$clientstring = $key;
+		$secondsstring = $value;
+	    	printf("I have not heard from $clientstring in %d days %d hours %d minutes." . "\n", $secondsstring/3600/24, $secondsstring/3600, $secondsstring/60);
+	}
+	print("If this is ok, add the client to the ignore list (recommended), or restart ntpd to clear all known clients.\n");
+
+} else {
+	$return_status = 0;
+	$clientcount = count($fresh_clients);
+	print("OK: $clientcount known clients.\n");
+}
+
+                                                                                                                                                    
+exit($return_status);
