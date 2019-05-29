@@ -105,7 +105,7 @@ if ( empty($output) ) {
 	foreach ( $stale_clients as $key => $value) {
 		$client = $key;
 		$seconds = $value;
-	    	printf("I have not heard from $client in %d days %d hours %d minutes." . "\n", $seconds/86400, $seconds/3600, $seconds/60);
+	    	printf("I have not heard from $client in %d days %d hours %d minutes." . "\n", $seconds/86400, $seconds%3600/60, $seconds%60);
 	}
 	print("If this is ok, add the client to the ignore list (recommended), or restart ntpd to clear all known clients.\n");
 
