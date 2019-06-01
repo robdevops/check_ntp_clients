@@ -32,7 +32,7 @@ echo $?
 ```
 
 ```
-I have not heard from 10.5.5.5 in 0 days 4 hours 269 minutes.
+I have not heard from 10.5.5.5 in 0 days 4 hours 17 minutes.
 If this is ok, add the client to the ignore list (recommended), or restart ntpd to clear all known clients.
 
 echo $?
