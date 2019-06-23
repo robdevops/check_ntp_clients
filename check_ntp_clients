@@ -3,6 +3,31 @@
 
 // requires monitor enabled in ntp.conf
 
+function fTime($diff) {
+
+    $d[0] = array(60,"minute");
+    $d[1] = array(3600,"hour");
+    $d[2] = array(86400,"day");
+
+    $w = array();
+    $return = "";
+    $secondsLeft = $diff;
+
+    for($i=2;$i>-1;$i--)
+    {
+         $w[$i] = intval($secondsLeft/$d[$i][0]);
+         $secondsLeft -= ($w[$i]*$d[$i][0]);
+         if($w[$i]!=0)
+         {
+            $return .= abs($w[$i]) . " " . $d[$i][1] . (($w[$i]>1)?'s':'') ." ";
+         }
+
+    }
+
+    return $return;
+}
+
+
 $servers = array();
 $output = array();
 $fresh_clients = array();
@@ -105,9 +130,11 @@ if ( empty($output) ) {
 	foreach ( $stale_clients as $key => $value) {
 		$client = $key;
 		$seconds = $value;
-	    	printf("I have not heard from $client in %d days %d hours %d minutes." . "\n", $seconds/86400, $seconds%3600/60, $seconds%60);
+		$humantime = fTime($seconds);
+		$domain = gethostbyaddr($client);
+		print( "$domain stale for $humantime\n" );
 	}
-	print("If this is ok, add the client to the ignore list (recommended), or restart ntpd to clear all known clients.\n");
+	print("\nIf this is ok, add the client to the ignore list (recommended), or restart ntpd to clear all known clients.\n");
 
 } else {
 	$return_status = 0;
