@@ -3,6 +3,31 @@
 
 // requires monitor enabled in ntp.conf
 
+function fTime($diff) {
+
+    $d[0] = array(60,"minute");
+    $d[1] = array(3600,"hour");
+    $d[2] = array(86400,"day");
+
+    $w = array();
+    $return = "";
+    $secondsLeft = $diff;
+
+    for($i=2;$i>-1;$i--)
+    {
+         $w[$i] = intval($secondsLeft/$d[$i][0]);
+         $secondsLeft -= ($w[$i]*$d[$i][0]);
+         if($w[$i]!=0)
+         {
+            $return .= abs($w[$i]) . " " . $d[$i][1] . (($w[$i]>1)?'s':'') ." ";
+         }
+
+    }
+
+    return $return;
+}
+
+
 $servers = array();
 $output = array();
 $fresh_clients = array();
@@ -30,7 +55,7 @@ if ( isset($options['h']) or isset($options['help']) ) {
 	\tClient to ignore. Can be specified multiple times.
 	--threshold <seconds>
 	\tWarning threshold. Defaults to two days.\n";
-	exit(3);
+    exit(3);
 }
 
 
@@ -66,25 +91,25 @@ foreach ( $output as $line ) {
 		$columns = preg_split( '/\s+/', trim($line) );
 		$client = $columns[0];
 		$seconds = $columns[8];
-
+	
 		// exclude stratum 1 and ignore list
 	        if ( !in_array($client, $servers) and !in_array($client, $ignore) ) {
-
+	
 			// only clients above threshold
 			if ( $seconds > $threshold ) {
-
+	
 				// only online clients
 				exec("ping -qc1 $client -W 1 2>/dev/null", $pingoutput, $pingreturn);
 				if ( $pingreturn == 0 ) {
 					$stale_clients += [ $client => $seconds ];
-
+	
 				}
-
+	
 			} else {
 				$fresh_clients[] = $client;
-
+	
 			}
-
+	
 		}
 
 	}
@@ -102,12 +127,16 @@ if ( empty($output) ) {
 
 } elseif ( count($stale_clients) ) {
 	$return_status = 1;
+	$stale_count = count($stale_clients);
+	print( "$stale_count stale clients:\n\n" );
 	foreach ( $stale_clients as $key => $value) {
 		$client = $key;
 		$seconds = $value;
-		printf("I have not heard from $client in %d days %d hours %d minutes." . "\n", $seconds/86400, $seconds%3600/60, $seconds%60);
+		$humantime = fTime($seconds);
+		$domain = gethostbyaddr($client);
+		print( "$domain stale for $humantime\n" );
 	}
-	print("If this is ok, add the client to the ignore list (recommended), or restart ntpd to clear all known clients.\n");
+	print("\nIf this is ok, add the client to the ignore list (recommended), or restart ntpd to clear all known clients.\n");
 
 } else {
 	$return_status = 0;
@@ -115,4 +144,5 @@ if ( empty($output) ) {
 	print("OK: $clientcount known clients.\n");
 }
 
+                                                                                                                                                    
 exit($return_status);
