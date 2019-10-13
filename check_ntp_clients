@@ -91,25 +91,25 @@ foreach ( $output as $line ) {
 		$columns = preg_split( '/\s+/', trim($line) );
 		$client = $columns[0];
 		$seconds = $columns[8];
-	
+
 		// exclude stratum 1 and ignore list
 	        if ( !in_array($client, $servers) and !in_array($client, $ignore) ) {
-	
+
 			// only clients above threshold
 			if ( $seconds > $threshold ) {
-	
+
 				// only online clients
 				exec("ping -qc1 $client -W 1 2>/dev/null", $pingoutput, $pingreturn);
 				if ( $pingreturn == 0 ) {
 					$stale_clients += [ $client => $seconds ];
-	
+
 				}
-	
+
 			} else {
 				$fresh_clients[] = $client;
-	
+
 			}
-	
+
 		}
 
 	}
@@ -144,5 +144,4 @@ if ( empty($output) ) {
 	print("OK: $clientcount known clients.\n");
 }
 
-                                                                                                                                                    
 exit($return_status);
