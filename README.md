@@ -32,10 +32,10 @@ echo $?
 ```
 
 ```
-I have not heard from 10.5.5.5 in 0 days 4 hours 17 minutes.
-If this is ok, add the client to the ignore list (recommended), or restart ntpd to clear all known clients.
+1 stale clients:
 
-echo $?
-1
+host.example.com stale for 9 days 22 hours 29 minutes
+
+If this is ok, add the client to the ignore list (recommended), or restart ntpd to clear all known clients.
 ```
 
