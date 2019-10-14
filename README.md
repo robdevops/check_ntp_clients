@@ -37,5 +37,8 @@ echo $?
 host.example.com stale for 9 days 22 hours 29 minutes
 
 If this is ok, add the client to the ignore list (recommended), or restart ntpd to clear all known clients.
+
+echo $?
+1
 ```
 
