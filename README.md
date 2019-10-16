@@ -1,5 +1,5 @@
 # check_ntp_clients
-`check_ntp_clients` plugin for Nagios / Icinga. Warns about stale clients known to ntpd or chronyd ntp servers.
+`check_ntp_clients` plugin for Nagios / Icinga. Warns about stale clients known to `ntpd` or `chronyd` ntp servers.
 
 ## Description
 Warns about known ntp clients we haven't heard from in a while.
