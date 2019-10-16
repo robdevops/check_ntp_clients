@@ -45,7 +45,7 @@ if( isset($options['h']) or isset($options['help']) ) {
 	OPTIONS:
 	--ignore <ip address>\tClient to ignore. Can be specified multiple times.
 	--threshold <seconds>\tWarning threshold. Minimum 60. Defaults to two days.
-	-c --chronyd\tFetch data from chronyd instead of ntpd\n";
+	-c --chronyd\t\tFetch data from chronyd instead of ntpd\n";
     exit(3);
 }
 
