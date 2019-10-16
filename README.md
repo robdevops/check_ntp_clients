@@ -8,9 +8,8 @@ Supports chronyd and ntpd (ntpd is the default).
 ## Requirements
 * php 5.4
 * ntpd or chronyd
-
-For ntpd, `ntpdc -nc monlist` must return results. This requires "monitor" enabled in ntpd config.
-For chronyd, `chronyc clients` must return results. This requires running it as root.
+    * For ntpd, `ntpdc -nc monlist` must return results. This requires "monitor" enabled in ntpd config.
+    * For chronyd, `chronyc clients` must return results. This requires running it as root.
 
 ## Usage
 ```
