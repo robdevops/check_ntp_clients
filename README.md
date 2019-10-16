@@ -3,7 +3,7 @@
 
 ## Description
 Warns about known ntp clients we haven't heard from in a while.
-Supports chronyd and ntpd (ntpd is the default).
+Supports chronyd and ntpd.
 
 ## Requirements
 * php 5.4
