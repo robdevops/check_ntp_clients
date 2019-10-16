@@ -17,7 +17,7 @@ Usage: check_ntp_clients [ OPTIONS ]
         OPTIONS:
         --ignore <ip address>   Client to ignore. Can be specified multiple times.
         --threshold <seconds>   Warning threshold. Minimum 60. Defaults to two days.
-        -c --chronyd    Fetch data from chronyd instead of ntpd
+        -c --chronyd		Fetch data from chronyd instead of ntpd
 ```
 
 ### Example output
