@@ -1,15 +1,16 @@
 #!/usr/bin/env php
 <?php
 
-// requires monitor enabled in ntp.conf
+// supports chronyd and ntpd (ntpd is the  default).
+// for ntpd, remove "disable monitor" from ntp.conf.
+// for chronyd, this script must be run as root.
 
 function fTime($diff) {
+    $d[0] = [60, 'minute'];
+    $d[1] = [3600, 'hour'];
+    $d[2] = [86400, 'day'];
 
-    $d[0] = array(60,"minute");
-    $d[1] = array(3600,"hour");
-    $d[2] = array(86400,"day");
-
-    $w = array();
+    $w = [];
     $return = "";
     $secondsLeft = $diff;
 
@@ -28,41 +29,65 @@ function fTime($diff) {
 }
 
 
-$servers = array();
-$output = array();
-$fresh_clients = array();
-$stale_clients = array();
+$servers = [];
+$output = [];
+$fresh_clients = [];
+$stale_clients = [];
+$me = basename(__FILE__);
 
 // args
-$shortopts = "h";
-$longopts = array("ignore:", "help", "threshold:");
+$shortopts = "hc";
+$longopts = ['ignore:', 'help', 'threshold:', 'chronyd'];
 $options = getopt($shortopts, $longopts);
-$threshold = "172800"; // two day default
-if ( isset($options['threshold']) ) {
-	$threshold = $options['threshold'];
-}
-$ignore = [];
-if ( isset($options['ignore']) ) {
-	$ignore = (array) $options["ignore"];
-}
 
-// help
-if ( isset($options['h']) or isset($options['help']) ) {
-	$me = basename(__FILE__);
+if( isset($options['h']) or isset($options['help']) ) {
 	echo "Usage: $me [ OPTIONS ]
 	OPTIONS:
-	--ignore <ip address>
-	\tClient to ignore. Can be specified multiple times.
-	--threshold <seconds>
-	\tWarning threshold. Defaults to two days.\n";
+	--ignore <ip address>\tClient to ignore. Can be specified multiple times.
+	--threshold <seconds>\tWarning threshold. Minimum 60. Defaults to two days.
+	-c --chronyd\tFetch data from chronyd instead of ntpd\n";
     exit(3);
 }
 
+$threshold = "172800"; // two day default
+if( isset($options['threshold']) ) {
+	$threshold = $options['threshold'];
+	if($threshold < 60) {
+		print("Mimumum threshold is 60 seconds. Aborting.\n");
+		exit(3);
+	}
+
+}
+
+$ignore = [];
+if( isset($options['ignore']) ) {
+	$ignore = [$options['ignore']];
+
+}
+
+$source_daemon = "ntpd";
+$command = "ntpdc -nc monlist";
+if( isset($options['c']) or isset($options['chronyd']) ) {
+	$source_daemon = "chronyd";
+	$command = "chronyc -c clients";
+	if(! is_executable('/usr/bin/chronyc') ) {
+		print("Can't find chronyc executable. Aborting.\n");
+		exit(3);
+	}
+
+} else {
+	if(! is_executable('/usr/sbin/ntpdc') ) {
+		print("Can't find ntpdc executable. If you use chrony, try re-running with --chronyd\n");
+		exit(3);
+
+	}
+}
+
+
 
 function fetch_ntp_servers() {
-	$command = 'ntpdc -nc listpeers';
-	exec( $command, $output );
-	foreach ( $output as $line ) {
+	exec("ntpdc -nc listpeers", $output);
+	foreach( $output as $line ) {
 		$columns = preg_split( '/\s+/', trim($line) );
 		$servers[] = $columns[1];
 	}
@@ -70,37 +95,39 @@ function fetch_ntp_servers() {
 
 }
 
-function fetch_ntp_clients() {
-	$command = 'ntpdc -nc monlist';
-	exec( $command, $output );
-	return $output;
-
-}
-
 
 // run external commands
-$servers = fetch_ntp_servers();
-$output = fetch_ntp_clients();
+if( $source_daemon === "ntpd" ) {
+	$servers = fetch_ntp_servers();
+
+}
+exec($command, $output);
 
 
 // process clients
-foreach ( $output as $line ) {
+foreach( $output as $line ) {
 
 	// exclude headers
-	if ( preg_match("/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\s/", $line) ) {
-		$columns = preg_split( '/\s+/', trim($line) );
+	if( preg_match("/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}[,\s]/", $line) ) {
+		$columns = preg_split( '/[,\s+]/', trim($line) );
 		$client = $columns[0];
-		$seconds = $columns[8];
+		if($source_daemon === "ntpd") {
+			$seconds = $columns[8];
+
+		} else {
+			$seconds = $columns[9];
+
+		}
 
 		// exclude stratum 1 and ignore list
-	        if ( !in_array($client, $servers) and !in_array($client, $ignore) ) {
+	        if( !in_array($client, $servers) and !in_array($client, $ignore) ) {
 
 			// only clients above threshold
-			if ( $seconds > $threshold ) {
+			if( $seconds > $threshold ) {
 
 				// only online clients
 				exec("ping -qc1 $client -W 1 2>/dev/null", $pingoutput, $pingreturn);
-				if ( $pingreturn == 0 ) {
+				if( $pingreturn === 0 ) {
 					$stale_clients += [ $client => $seconds ];
 
 				}
@@ -117,31 +144,41 @@ foreach ( $output as $line ) {
 }
 
 // nagios output
-if ( empty($output) ) {
+if( empty($output) ) {
 	$return_status = 3;
-	print("UNKNOWN: Error fetching ntpdc monlist\n");
+	print("UNKNOWN: Error fetching client list from $source_daemon\n");
 
-} elseif ( empty($fresh_clients) ) {
+} elseif( empty($fresh_clients) and empty($stale_clients) ) {
 	$return_status = 1;
-	print("WARNING: No known clients.\n");
+	$whoami = getenv('USERNAME') ?: getenv('USER');
+	if($source_daemon === "chronyd" and $whoami !== "root" ) {
+		print("WARNING: No known clients. Maybe you meant to run this as root?\n");
 
-} elseif ( count($stale_clients) ) {
+	} else {
+		print("WARNING: No known clients.\n");
+
+	}
+
+} elseif( count($stale_clients) ) {
 	$return_status = 1;
 	$stale_count = count($stale_clients);
 	print( "$stale_count stale clients:\n\n" );
-	foreach ( $stale_clients as $key => $value) {
+	foreach( $stale_clients as $key => $value ) {
 		$client = $key;
 		$seconds = $value;
 		$humantime = fTime($seconds);
 		$domain = gethostbyaddr($client);
 		print( "$domain stale for $humantime\n" );
+
 	}
-	print("\nIf this is ok, add the client to the ignore list (recommended), or restart ntpd to clear all known clients.\n");
+	print("\nIf this is ok, add the client to the ignore list (recommended), or restart $source_daemon to clear all known clients.\n");
 
 } else {
 	$return_status = 0;
 	$clientcount = count($fresh_clients);
 	print("OK: $clientcount known clients.\n");
+
 }
+
 
 exit($return_status);
