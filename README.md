@@ -5,7 +5,7 @@
 Warns about known NTP clients we haven't heard from in a while. Supports chronyd and ntpd. 
 
 ## Limitations
-This test uses runtime network statistics counters to discover clients. Note that this means the client list is cleared when ntpd or chronyd are restarted, making it possible to miss a stale client if the server is restarted at an unfortunate time. It is therefore recommended to have additional tests which check each client's local clock against the server, but this test is very useful in complement as a preventative measure.
+This test uses runtime network statistics counters to discover clients. Note that this means the client list is cleared when ntpd or chronyd are restarted, making it possible to miss a stale client if the server is restarted at an unfortunate time. It is therefore recommended to have additional tests which check each client's local clock against the server. However, this test is highly useful as a complimentary and preventative measure. 
 
 ## Usage
 ```
