@@ -22,7 +22,7 @@ Options:
 * php 5.4
 * ntpd or chronyd
     * For ntpd, `ntpdc -nc monlist` must return results. This requires "monitor" not disabled in ntpd config.
-    * For chronyd, `chronyc clients` must return results. This requires running it as root, or with `--sudo` option.
+    * For chronyd, `chronyc clients` must return results. This requires running it as root, or with the `--sudo` option.
         * `--sudo` option requires sudoers entry for test user to run `/usr/bin/chronyc -c clients`.
 
 ### Example output
