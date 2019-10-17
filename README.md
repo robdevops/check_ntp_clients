@@ -9,6 +9,13 @@ This test is designed to run on an NTP server, and alerts about known NTP client
 
 * There is no IPv6 support at this time.
 
+## Requirements
+* php 5.4
+* ntpd or chronyd
+    * For ntpd, `ntpdc -nc monlist` must return results. This requires "monitor" not disabled in ntpd config.
+    * For chronyd, `chronyc -c clients` must return results. This requires running it as root, or with the `--sudo` option.
+        * The `--sudo` option requires a sudoers entry for the test user to run `/usr/bin/chronyc -c clients`.
+
 ## Usage
 ```
 Usage: check_ntp_clients [-c] [-i IPv4_address] [-t seconds] [-s]
@@ -19,13 +26,6 @@ Options:
 -t, --threshold         Warning threshold. Minimum 60. Defaults to two days.
 -s, --sudo              Invoke sudo for chronyd method. Needs sudo config for '/usr/bin/chronyc -c clients'.
 ```
-
-## Requirements
-* php 5.4
-* ntpd or chronyd
-    * For ntpd, `ntpdc -nc monlist` must return results. This requires "monitor" not disabled in ntpd config.
-    * For chronyd, `chronyc -c clients` must return results. This requires running it as root, or with the `--sudo` option.
-        * The `--sudo` option requires a sudoers entry for the test user to run `/usr/bin/chronyc -c clients`.
 
 ### Example output
 ```
