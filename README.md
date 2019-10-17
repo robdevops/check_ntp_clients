@@ -2,7 +2,7 @@
 `check_ntp_clients` plugin for Nagios / Icinga. Warns about stale clients known to `ntpd` or `chronyd` NTP servers.
 
 ## Description
-This test is designed to run on an NTP server, and alerts about known NTP clients we haven't heard from in a while. Supports chronyd and ntpd. 
+This test is designed to run on a private NTP server, and alerts about known NTP clients we haven't heard from in a while. Supports chronyd and ntpd. 
 
 ## Limitations
 * This test uses runtime network statistics counters to discover clients. This means the client list is cleared when ntpd or chronyd are restarted, making it possible to miss a stale client if the server is restarted at an unfortunate time. It is recommended to compliment this test with `check_ntp_time` (from the `nagios-plugins-ntp` or `monitoring-plugins-basic` packages) on each client.
