@@ -5,7 +5,7 @@
 Warns about known NTP clients we haven't heard from in a while. Supports chronyd and ntpd. 
 
 ## Limitations
-This test uses runtime network statistics counters to discover clients. This means the client list is cleared when ntpd or chronyd are restarted, making it possible to miss a stale client if the server is restarted at an unfortunate time. It is therefore recommended to compliment this test with `check_ntp_time` (from nagios-plugins packages) on each client.
+This test uses runtime network statistics counters to discover clients. This means the client list is cleared when ntpd or chronyd are restarted, making it possible to miss a stale client if the server is restarted at an unfortunate time. It is therefore recommended to compliment this test with `check_ntp_time` (from the `nagios-plugins-ntp` or `monitoring-plugins-basic` packages) on each client.
 
 ## Usage
 ```
