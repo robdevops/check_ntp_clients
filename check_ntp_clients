@@ -36,22 +36,30 @@ $stale_clients = [];
 $me = basename(__FILE__);
 
 // args
-$shortopts = "hc";
-$longopts = ['ignore:', 'help', 'threshold:', 'chronyd'];
+$shortopts = 'hcsi:t:';
+$longopts = ['ignore:', 'help', 'threshold:', 'chronyd', 'sudo'];
 $options = getopt($shortopts, $longopts);
 
 if( isset($options['h']) or isset($options['help']) ) {
-	echo "Usage: $me [ OPTIONS ]
-	OPTIONS:
-	--ignore <ip address>\tClient to ignore. Can be specified multiple times.
-	--threshold <seconds>\tWarning threshold. Minimum 60. Defaults to two days.
-	-c --chronyd\t\tFetch data from chronyd instead of ntpd\n.";
+	echo "Usage: $me [-c] [-i ipv4_address] [-t seconds] [-s]\n
+Options:
+-c, --chronyd\t\tFetch data from chronyd instead of ntpd.
+-i, --ignore\t\tClient to ignore. Can be specified multiple times.
+-t, --threshold\t\tWarning threshold. Minimum 60. Defaults to two days.
+-s, --sudo\t\tInvoke sudo when used with chronyd. Requires allow for 'chronyc -c clients' in sudoers.
+\n";
     exit(3);
 }
 
 $threshold = "172800"; // two day default
-if( isset($options['threshold']) ) {
-	$threshold = $options['threshold'];
+if( isset($options['threshold']) or isset($options['t']) ) {
+	if( isset($options['t']) ) {
+		$threshold = $options['t'];
+
+	} else {
+		$threshold = $options['threshold'];
+
+	}
 	if($threshold < 60) {
 		print("Mimumum threshold is 60 seconds. Aborting.\n");
 		exit(3);
@@ -60,8 +68,14 @@ if( isset($options['threshold']) ) {
 }
 
 $ignore = [];
-if( isset($options['ignore']) ) {
-	$ignore = [$options['ignore']];
+if( isset($options['ignore']) or isset($options['i']) ) {
+	if( isset($options['i']) ) {
+		$ignore = [$options['i']];
+
+	} else {
+		$ignore = [$options['ignore']];
+
+	}
 
 }
 
@@ -69,15 +83,24 @@ $source_daemon = "ntpd";
 $command = "ntpdc -nc monlist";
 if( isset($options['c']) or isset($options['chronyd']) ) {
 	$source_daemon = "chronyd";
-	$command = "chronyc -c clients";
-	if(! is_executable('/usr/bin/chronyc') ) {
+	$chronyc_path = exec('which chronyc 2>/dev/null');
+	if(! is_executable("$chronyc_path") ) {
 		print("Can't find chronyc executable. Aborting.\n");
 		exit(3);
 	}
 
+	if( isset($options['s']) or isset($options['sudo']) ) {
+		$command = "sudo $chronyc_path -c clients";
+
+	} else {
+		$command = "$chronyc_path -c clients";
+
+	}
+
 } else {
-	if(! is_executable('/usr/sbin/ntpdc') ) {
-		print("Can't find ntpdc executable. If you use chrony, try re-running with --chronyd\n");
+	$ntpdc_path = exec('which ntpdc 2>/dev/null');
+	if(! is_executable("$ntpdc_path") ) {
+		print("Can't find ntpdc executable. Try re-running with --chronyd.\n");
 		exit(3);
 
 	}
@@ -152,7 +175,7 @@ if( empty($output) ) {
 	$return_status = 1;
 	$whoami = getenv('USERNAME') ?: getenv('USER');
 	if($source_daemon === "chronyd" and $whoami !== "root" ) {
-		print("WARNING: No known clients. Maybe you meant to run this as root?\n");
+		print("WARNING: No known clients. Try re-running with --chronyd --sudo.\n");
 
 	} else {
 		print("WARNING: No known clients.\n");
