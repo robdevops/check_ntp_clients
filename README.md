@@ -10,7 +10,7 @@ This test is designed to run on an NTP server, and alerts about known NTP client
 * There is no IPv6 support at this time.
 
 ## Requirements
-* php 5.4
+* php 5.4 or greater
 * ntpd or chronyd
     * For ntpd, `ntpdc -nc monlist` must return results. This requires "monitor" not disabled in ntpd config.
     * For chronyd, `chronyc -c clients` must return results. This requires running it as root, or with the `--sudo` option.
