@@ -23,7 +23,7 @@ Options:
 * ntpd or chronyd
     * For ntpd, `ntpdc -nc monlist` must return results. This requires "monitor" not disabled in ntpd config.
     * For chronyd, `chronyc clients` must return results. This requires running it as root, or with the `--sudo` option.
-        * The `--sudo` option requires sudoers entry for test user to run `/usr/bin/chronyc -c clients`.
+        * The `--sudo` option requires a sudoers entry for the test user to run `/usr/bin/chronyc -c clients`.
 
 ### Example output
 ```
