@@ -7,8 +7,6 @@ This test is designed to run on an NTP server, and alerts about known NTP client
 ## Limitations
 * This test uses runtime network statistics counters to discover clients. This means the client list is cleared when ntpd or chronyd are restarted, making it possible to miss a stale client if the server is restarted at an unfortunate time. It is recommended to compliment this test with `check_ntp_time` (from the `nagios-plugins-ntp` or `monitoring-plugins-basic` packages) on each client.
 
-* Hostnames will only be displayed if reverse DNS is correctly configured. Otherwise, the client IPv4 address will be displayed.
-
 * There is no IPv6 support at this time.
 
 ## Usage
