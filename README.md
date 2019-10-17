@@ -10,7 +10,7 @@ Supports chronyd and ntpd.
 * ntpd or chronyd
     * For ntpd, `ntpdc -nc monlist` must return results. This requires "monitor" enabled in ntpd config.
     * For chronyd, `chronyc clients` must return results. This requires running it as root, or with --sudo.
-        * `--sudo` option requires sudoers allow for test user to run `/usr/bin/chronyc -c clients`.
+        * `--sudo` option requires sudoers entry for test user to run `/usr/bin/chronyc -c clients`.
 
 ## Usage
 ```
@@ -20,7 +20,7 @@ Options:
 -c, --chronyd           Fetch data from chronyd instead of ntpd.
 -i, --ignore            Client to ignore. Can be specified multiple times.
 -t, --threshold         Warning threshold. Minimum 60. Defaults to two days.
--s, --sudo              Invoke sudo when used with chronyd. Requires allow for '/usr/bin/chronyc -c clients' in sudoers.
+-s, --sudo              Invoke sudo when used with chronyd. Requires sudoers entry for '/usr/bin/chronyc -c clients'.
 ```
 
 ### Example output
