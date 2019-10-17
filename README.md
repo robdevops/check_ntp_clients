@@ -20,7 +20,7 @@ Options:
 -c, --chronyd           Fetch data from chronyd instead of ntpd.
 -i, --ignore            Client to ignore. Can be specified multiple times.
 -t, --threshold         Warning threshold. Minimum 60. Defaults to two days.
--s, --sudo              Invoke sudo when used with chronyd. Requires sudo config for '/usr/bin/chronyc -c clients'.
+-s, --sudo              Invoke sudo for chronyd method. Needs sudo config for '/usr/bin/chronyc -c clients'.
 ```
 
 ### Example output
