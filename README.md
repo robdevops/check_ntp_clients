@@ -8,7 +8,7 @@ Supports chronyd and ntpd.
 ## Requirements
 * php 5.4
 * ntpd or chronyd
-    * For ntpd, `ntpdc -nc monlist` must return results. This requires "monitor" enabled in ntpd config.
+    * For ntpd, `ntpdc -nc monlist` must return results. This requires "monitor" not disabled in ntpd config.
     * For chronyd, `chronyc clients` must return results. This requires running it as root, or with --sudo.
         * `--sudo` option requires sudoers entry for test user to run `/usr/bin/chronyc -c clients`.
 
