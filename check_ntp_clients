@@ -48,8 +48,8 @@ Options:
 -i, --ignore\t\tClient to ignore. Can be specified multiple times.
 -t, --threshold\t\tWarning threshold. Minimum 60. Defaults to two days.
 -s, --sudo\t\tInvoke sudo for chronyd method. Needs sudo config for '/usr/bin/chronyc -c clients'.
-\n";
-    exit(3);
+	\n";
+	exit(3);
 }
 
 $threshold = "172800"; // two day default
