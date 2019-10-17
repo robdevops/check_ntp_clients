@@ -9,15 +9,18 @@ Supports chronyd and ntpd.
 * php 5.4
 * ntpd or chronyd
     * For ntpd, `ntpdc -nc monlist` must return results. This requires "monitor" enabled in ntpd config.
-    * For chronyd, `chronyc clients` must return results. This requires running it as root.
+    * For chronyd, `chronyc clients` must return results. This requires running it as root, or with --sudo.
+        * `--sudo` requires `/usr/bin/chronyc -c clients` in sudoers.
 
 ## Usage
 ```
-Usage: check_ntp_clients [ OPTIONS ]
-        OPTIONS:
-        --ignore <ip address>   Client to ignore. Can be specified multiple times.
-        --threshold <seconds>   Warning threshold. Minimum 60. Defaults to two days.
-        -c --chronyd		Fetch data from chronyd instead of ntpd.
+Usage: check_ntp_clients [-c] [-i ipv4_address] [-t seconds] [-s]
+
+Options:
+-c, --chronyd           Fetch data from chronyd instead of ntpd.
+-i, --ignore            Client to ignore. Can be specified multiple times.
+-t, --threshold         Warning threshold. Minimum 60. Defaults to two days.
+-s, --sudo              Invoke sudo when used with chronyd. Requires allow for 'chronyc -c clients' in sudoers.
 ```
 
 ### Example output
