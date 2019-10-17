@@ -3,7 +3,8 @@
 
 // supports chronyd and ntpd (ntpd is the  default).
 // for ntpd, remove "disable monitor" from ntp.conf.
-// for chronyd, this script must be run as root.
+// for chronyd, requires running as root or using --sudo option.
+// sudo option requires sudoers to allow '/usr/bin/chronyc -c clients'
 
 function fTime($diff) {
     $d[0] = [60, 'minute'];
