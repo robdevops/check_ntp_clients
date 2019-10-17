@@ -42,7 +42,7 @@ $longopts = ['ignore:', 'help', 'threshold:', 'chronyd', 'sudo'];
 $options = getopt($shortopts, $longopts);
 
 if( isset($options['h']) or isset($options['help']) ) {
-	echo "Usage: $me [-c] [-i ipv4_address] [-t seconds] [-s]\n
+	echo "Usage: $me [-c] [-i IPv4_address] [-t seconds] [-s]\n
 Options:
 -c, --chronyd\t\tFetch data from chronyd instead of ntpd.
 -i, --ignore\t\tClient to ignore. Can be specified multiple times.
