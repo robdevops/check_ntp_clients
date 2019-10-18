@@ -1,207 +1,200 @@
 #!/usr/bin/env php
 <?php
 
-// supports chronyd and ntpd (ntpd is the  default).
-// for ntpd, remove "disable monitor" from ntp.conf.
-// for chronyd, requires running as root or using --sudo option.
-// sudo option requires sudoers to allow '/usr/bin/chronyc -c clients'
+/**
+* check private ntp servers for stale clients
+* supports chronyd and ntpd (defaults to ntpd).
+*
+* https://github.com/robdevops/check_ntp_clients/
+* 
+* requirements:
+*	- for ntpd, remove "disable monitor" from ntp.conf.
+*	- for chronyd, requires running as root or using --sudo option.
+*	- sudo option requires sudoers to allow '/usr/bin/chronyc -c clients'
+*
+*future plans:
+*	- ipv6 support
+*/
 
-function fTime($diff) {
+function humantime($diff) {
     $d[0] = [60, 'minute'];
     $d[1] = [3600, 'hour'];
     $d[2] = [86400, 'day'];
 
     $w = [];
-    $return = "";
+    $return = '';
     $secondsLeft = $diff;
 
-    for($i=2;$i>-1;$i--)
-    {
+    for($i=2;$i>-1;$i--) {
          $w[$i] = intval($secondsLeft/$d[$i][0]);
          $secondsLeft -= ($w[$i]*$d[$i][0]);
-         if($w[$i]!=0)
-         {
+         if($w[$i]!=0) {
             $return .= abs($w[$i]) . " " . $d[$i][1] . (($w[$i]>1)?'s':'') ." ";
          }
-
     }
-
     return $return;
 }
 
-
-$servers = [];
 $output = [];
 $fresh_clients = [];
 $stale_clients = [];
 $me = basename(__FILE__);
 
 // args
-$shortopts = 'hcsi:t:';
-$longopts = ['ignore:', 'help', 'threshold:', 'chronyd', 'sudo'];
+$shortopts = 'chi:pst:';
+$longopts = ['chronyd', 'help', 'ignore:', 'ping', 'sudo', 'threshold:' ];
 $options = getopt($shortopts, $longopts);
 
+// help
 if( isset($options['h']) or isset($options['help']) ) {
-	echo "Usage: $me [-c] [-i IPv4_address] [-t seconds] [-s]\n
+	echo "Usage: $me [-c] [-i IPv4_address] [-t seconds] [-s]
+
 Options:
 -c, --chronyd\t\tFetch data from chronyd instead of ntpd.
+-h, --help\t\tThis help.
 -i, --ignore\t\tClient to ignore. Can be specified multiple times.
+-p, --ping\t\tIgnore any stale clients which don't respond to pings.
+-s, --sudo\t\tUse sudo for chrony. Sudoers must allow '/usr/bin/chronyc -c clients'.
 -t, --threshold\t\tWarning threshold. Minimum 60. Defaults to two days.
--s, --sudo\t\tInvoke sudo for chronyd method. Needs sudo config for '/usr/bin/chronyc -c clients'.\n";
+";
 	exit(3);
 }
 
-$threshold = "172800"; // two day default
+// warning threshold
+$threshold = 172800; // two day default
 if( isset($options['threshold']) or isset($options['t']) ) {
 	if( isset($options['t']) ) {
 		$threshold = $options['t'];
-
 	} else {
 		$threshold = $options['threshold'];
-
 	}
 	if($threshold < 60) {
-		print("Mimumum threshold is 60 seconds. Aborting.\n");
+		print("Mimumum threshold is 60 seconds. Aborting." . PHP_EOL);
 		exit(3);
 	}
-
 }
 
-$ignore = [];
+// ignore list
+$ignore = ['127.0.0.1'];
 if( isset($options['ignore']) or isset($options['i']) ) {
 	if( isset($options['i']) ) {
-		$ignore = [$options['i']];
-
+		$ignore[] = [$options['i']];
 	} else {
-		$ignore = [$options['ignore']];
-
+		$ignore[] = [$options['ignore']];
 	}
-
 }
 
-$source_daemon = "ntpd";
-$command = "ntpdc -nc monlist";
+// source selection
+$source_daemon = 'ntpd';
+$get_ntp_clients = 'ntpdc -nc monlist';
 if( isset($options['c']) or isset($options['chronyd']) ) {
-	$source_daemon = "chronyd";
+	$source_daemon = 'chronyd';
 	$chronyc_path = exec('which chronyc 2>/dev/null');
 	if(! is_executable("$chronyc_path") ) {
-		print("Can't find chronyc executable. Aborting.\n");
+		print("Can't find chronyc executable. Aborting." . PHP_EOL);
 		exit(3);
 	}
-
 	if( isset($options['s']) or isset($options['sudo']) ) {
-		$command = "sudo $chronyc_path -c clients";
-
+		$get_ntp_clients = "sudo $chronyc_path -c clients";
 	} else {
-		$command = "$chronyc_path -c clients";
-
+		$get_ntp_clients = "$chronyc_path -c clients";
 	}
 
 } else {
 	$ntpdc_path = exec('which ntpdc 2>/dev/null');
 	if(! is_executable("$ntpdc_path") ) {
-		print("Can't find ntpdc executable. Try re-running with --chronyd.\n");
+		print("Can't find ntpdc executable. Try re-running with --chronyd." . PHP_EOL);
 		exit(3);
-
 	}
 }
 
-
-
-function fetch_ntp_servers() {
-	exec("ntpdc -nc listpeers", $output);
-	foreach( $output as $line ) {
-		$columns = preg_split( '/\s+/', trim($line) );
+// we only want clients
+if($source_daemon === 'ntpd') {
+	$servers = [];
+	exec('ntpdc -nc listpeers', $output);
+	foreach($output as $line) {
+		$columns = preg_split('/\s+/', trim($line));
 		$servers[] = $columns[1];
 	}
-	return $servers;
-
+	if(empty($servers)) {
+		print("Unknown: Error fetching server list from ntpd." . PHP_EOL);
+		exit(3);
+	}
+	$ignore = array_merge($ignore, $servers);
 }
 
+// main fetch
+exec($get_ntp_clients, $output);
 
-// run external commands
-if( $source_daemon === "ntpd" ) {
-	$servers = fetch_ntp_servers();
-
-}
-exec($command, $output);
-
-
-// process clients
+// process raw data to get stale clients
 foreach( $output as $line ) {
-
-	// exclude headers
-	if( preg_match("/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}[,\s]/", $line) ) {
-		$columns = preg_split( '/[,\s+]/', trim($line) );
+	// exclude ntpd headers and chrony command-only clients
+	if( preg_match("/^(\d{1,3}\.){3}\d{1,3}[,\s]+[1-9]/", $line) ) {
+		$columns = preg_split( '/[,\s]+/', trim($line) );
 		$client = $columns[0];
-		if($source_daemon === "ntpd") {
+		if($source_daemon === 'ntpd') {
 			$seconds = $columns[8];
-
 		} else {
-			$seconds = $columns[9];
-
+			$seconds = $columns[5];
+		}
+		if(!is_numeric($seconds)) {
+			fwrite(STDERR, "$client age unknown: $seconds" . PHP_EOL);
 		}
 
-		// exclude stratum 1 and ignore list
-	        if( !in_array($client, $servers) and !in_array($client, $ignore) ) {
+		// exclude ignore list
+	        if( !in_array($client, $ignore) ) {
 
-			// only clients above threshold
+			// exclude fresh clients
 			if( $seconds > $threshold ) {
 
-				// only online clients
-				exec("ping -qc1 $client -W 1 2>/dev/null", $pingoutput, $pingreturn);
-				if( $pingreturn === 0 ) {
+				// optionally exclude offline clients
+				if(isset($options['p']) or isset($options['ping'])) {
+					exec("ping -qc1 $client -W1 2>/dev/null", $pingout, $pingreturn);
+					if( $pingreturn === 0 ) {
+						$stale_clients += [ $client => $seconds ];
+					}
+				} else {
 					$stale_clients += [ $client => $seconds ];
-
 				}
-
 			} else {
 				$fresh_clients[] = $client;
-
 			}
-
 		}
-
 	}
-
 }
 
-// nagios output
+// our output
 if( empty($output) ) {
 	$return_status = 3;
-	print("UNKNOWN: Error fetching client list from $source_daemon\n");
+	print("UNKNOWN: Error fetching client list from $source_daemon" . PHP_EOL);
 
 } elseif( empty($fresh_clients) and empty($stale_clients) ) {
 	$return_status = 1;
 	$whoami = getenv('USERNAME') ?: getenv('USER');
-	if($source_daemon === "chronyd" and $whoami !== "root" ) {
-		print("WARNING: No known clients. Try re-running with --chronyd --sudo.\n");
-
+	if($source_daemon === 'chronyd' and $whoami !== 'root' ) {
+		print("WARNING: No known clients. Try re-running with --chronyd --sudo." . PHP_EOL);
 	} else {
-		print("WARNING: No known clients.\n");
-
+		print("WARNING: No known clients." . PHP_EOL);
 	}
 
 } elseif( count($stale_clients) ) {
 	$return_status = 1;
 	$stale_count = count($stale_clients);
-	print( "$stale_count stale clients:\n\n" );
+	print( "$stale_count stale clients:" . PHP_EOL . PHP_EOL);
 	foreach( $stale_clients as $key => $value ) {
 		$client = $key;
 		$seconds = $value;
-		$humantime = fTime($seconds);
+		$humantime = humantime($seconds);
 		$domain = gethostbyaddr($client);
-		print( "$domain stale for $humantime\n" );
-
+		print( "$domain stale for $humantime" . PHP_EOL);
 	}
-	print("\nIf this is ok, add the client to the ignore list (recommended), or restart $source_daemon to clear all known clients.\n");
+	print(PHP_EOL. "If this is ok, add the client to the ignore list (recommended), or restart $source_daemon to clear all known clients." . PHP_EOL);
 
 } else {
 	$return_status = 0;
 	$clientcount = count($fresh_clients);
-	print("OK: $clientcount known clients.\n");
-
+	print("OK: $clientcount known clients." . PHP_EOL);
 }
 
-
 exit($return_status);
+
