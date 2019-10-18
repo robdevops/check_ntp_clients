@@ -22,9 +22,11 @@ Usage: check_ntp_clients [-c] [-i IPv4_address] [-t seconds] [-s]
 
 Options:
 -c, --chronyd           Fetch data from chronyd instead of ntpd.
+-h, --help              This help.
 -i, --ignore            Client to ignore. Can be specified multiple times.
+-p, --ping              Ignore any stale clients which don't respond to pings.
+-s, --sudo              Use sudo for chrony. Sudoers must allow '/usr/bin/chronyc -c clients'.
 -t, --threshold         Warning threshold. Minimum 60. Defaults to two days.
--s, --sudo              Invoke sudo for chronyd method. Needs sudo config for '/usr/bin/chronyc -c clients'.
 ```
 
 ### Example output
