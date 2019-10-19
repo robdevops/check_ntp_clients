@@ -117,7 +117,7 @@ if($source_daemon === 'ntpd') {
 		$servers[] = $columns[1];
 	}
 	if(empty($servers)) {
-		print("Unknown: Error fetching server list from ntpd." . PHP_EOL);
+		print("Error fetching server list from ntpd." . PHP_EOL);
 		exit(3);
 	}
 	$ignore = array_merge($ignore, $servers);
