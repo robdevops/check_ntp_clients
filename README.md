@@ -18,7 +18,7 @@ This test is designed to run on a private NTP server, and alerts about known NTP
 
 ## Usage
 ```
-Usage: check_ntp_clients [-c] [-i IPv4_address] [-t seconds] [-s]
+Usage: check_ntp_clients [-c] [-i ip_address] [-t seconds] [-s]
 
 Options:
 -c, --chronyd           Fetch data from chronyd instead of ntpd.
@@ -40,7 +40,7 @@ echo $?
 ```
 1 stale clients:
 
-host.example.com stale for 9 days 22 hours 29 minutes
+host.example.com stale for 2 days 3 hours 29 minutes
 
 If this is ok, add the client to the ignore list (recommended), or restart ntpd to clear all known clients.
 
