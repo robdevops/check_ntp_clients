@@ -6,33 +6,30 @@
 * supports chronyd and ntpd (defaults to ntpd).
 *
 * https://github.com/robdevops/check_ntp_clients/
-* 
+*
 * requirements:
 *	- for ntpd, remove "disable monitor" from ntp.conf.
 *	- for chronyd, requires running as root or using --sudo option.
 *	- sudo option requires sudoers to allow '/usr/bin/chronyc -c clients'
 *
 *future plans:
-*	- ipv6 support
+*	- verify ipv6 support
 */
 
-function humantime($diff) {
-    $d[0] = [60, 'minute'];
-    $d[1] = [3600, 'hour'];
-    $d[2] = [86400, 'day'];
+function humantime($remainder) {
+	$return = '';
+	$denominator[0] = [60, 'minute'];
+	$denominator[1] = [3600, 'hour'];
+	$denominator[2] = [86400, 'day'];
 
-    $w = [];
-    $return = '';
-    $secondsLeft = $diff;
-
-    for($i=2;$i>-1;$i--) {
-         $w[$i] = intval($secondsLeft/$d[$i][0]);
-         $secondsLeft -= ($w[$i]*$d[$i][0]);
-         if($w[$i]!=0) {
-            $return .= abs($w[$i]) . " " . $d[$i][1] . (($w[$i]>1)?'s':'') ." ";
-         }
-    }
-    return $return;
+	for($i = 2; $i > -1; $i--) {
+		 $filled[$i] = intval($remainder / $denominator[$i][0]);
+		 $remainder -= ($filled[$i] * $denominator[$i][0]);
+		 if($filled[$i] != 0) {
+			$return .= abs($filled[$i]) . ' ' . $denominator[$i][1] . (($filled[$i] > 1) ? 's' : '') . ' ';
+		 }
+	}
+	return $return;
 }
 
 $output = [];
@@ -46,7 +43,7 @@ $longopts = ['chronyd', 'help', 'ignore:', 'ping', 'sudo', 'threshold:' ];
 $options = getopt($shortopts, $longopts);
 
 // help
-if( isset($options['h']) or isset($options['help']) ) {
+if(isset($options['h']) or isset($options['help'])) {
 	echo "Usage: $me [-c] [-i ip_address] [-t seconds] [-s]
 
 Options:
@@ -62,8 +59,8 @@ Options:
 
 // warning threshold
 $threshold = 172800; // two day default
-if( isset($options['threshold']) or isset($options['t']) ) {
-	if( isset($options['t']) ) {
+if(isset($options['threshold']) or isset($options['t'])) {
+	if(isset($options['t'])) {
 		$threshold = $options['t'];
 	} else {
 		$threshold = $options['threshold'];
@@ -76,8 +73,8 @@ if( isset($options['threshold']) or isset($options['t']) ) {
 
 // ignore list
 $ignore = ['127.0.0.1', '::1'];
-if( isset($options['ignore']) or isset($options['i']) ) {
-	if( isset($options['i']) ) {
+if(isset($options['ignore']) or isset($options['i'])) {
+	if(isset($options['i'])) {
 		$ignore[] = [$options['i']];
 	} else {
 		$ignore[] = [$options['ignore']];
@@ -87,14 +84,14 @@ if( isset($options['ignore']) or isset($options['i']) ) {
 // source selection
 $source_daemon = 'ntpd';
 $get_ntp_clients = 'ntpdc -nc monlist';
-if( isset($options['c']) or isset($options['chronyd']) ) {
+if(isset($options['c']) or isset($options['chronyd'])) {
 	$source_daemon = 'chronyd';
 	$chronyc_path = exec('which chronyc 2>/dev/null');
-	if(! is_executable("$chronyc_path") ) {
+	if(!is_executable("$chronyc_path")) {
 		print("Can't find chronyc executable. Aborting." . PHP_EOL);
 		exit(3);
 	}
-	if( isset($options['s']) or isset($options['sudo']) ) {
+	if(isset($options['s']) or isset($options['sudo'])) {
 		$get_ntp_clients = "sudo $chronyc_path -c clients";
 	} else {
 		$get_ntp_clients = "$chronyc_path -c clients";
@@ -102,7 +99,7 @@ if( isset($options['c']) or isset($options['chronyd']) ) {
 
 } else {
 	$ntpdc_path = exec('which ntpdc 2>/dev/null');
-	if(! is_executable("$ntpdc_path") ) {
+	if(!is_executable("$ntpdc_path")) {
 		print("Can't find ntpdc executable. Try re-running with --chronyd." . PHP_EOL);
 		exit(3);
 	}
@@ -127,10 +124,10 @@ if($source_daemon === 'ntpd') {
 exec($get_ntp_clients, $output);
 
 // process raw data to get stale clients
-foreach( $output as $line ) {
+foreach($output as $line) {
 	// ipv6 or ipv4 + column separator + non-zero digit
-	if( preg_match("/^((:){0,2}([0-9a-fA-F]{1,4}:)+:).*|((\d{1,3}\.){3}\d{1,3})[,\s]+[1-9]/", $line) ) {
-		$columns = preg_split( '/[,\s]+/', trim($line) );
+	if(preg_match("/^((:){0,2}([0-9a-fA-F]{1,4}:)+:).*|((\d{1,3}\.){3}\d{1,3})[,\s]+[1-9]/", $line)) {
+		$columns = preg_split('/[,\s]+/', trim($line));
 		$client = $columns[0];
 		if($source_daemon === 'ntpd') {
 			$seconds = $columns[8];
@@ -140,17 +137,16 @@ foreach( $output as $line ) {
 		if(!is_numeric($seconds)) {
 			fwrite(STDERR, "$client age unknown: $seconds" . PHP_EOL);
 		}
-
 		// exclude ignore list
-	        if( !in_array($client, $ignore) ) {
+			if(!in_array($client, $ignore)) {
 
 			// exclude fresh clients
-			if( $seconds > $threshold ) {
+			if($seconds > $threshold) {
 
 				// optionally exclude offline clients
 				if(isset($options['p']) or isset($options['ping'])) {
 					exec("ping -qc1 $client -W1 2>/dev/null", $pingout, $pingreturn);
-					if( $pingreturn === 0 ) {
+					if($pingreturn === 0) {
 						$stale_clients += [ $client => $seconds ];
 					}
 				} else {
@@ -164,29 +160,29 @@ foreach( $output as $line ) {
 }
 
 // our output
-if( empty($output) ) {
+if(empty($output)) {
 	$return_status = 3;
 	print("UNKNOWN: Error fetching client list from $source_daemon" . PHP_EOL);
 
-} elseif( empty($fresh_clients) and empty($stale_clients) ) {
+} elseif(empty($fresh_clients) and empty($stale_clients)) {
 	$return_status = 1;
 	$whoami = getenv('USERNAME') ?: getenv('USER');
-	if($source_daemon === 'chronyd' and $whoami !== 'root' ) {
+	if($source_daemon === 'chronyd' and $whoami !== 'root') {
 		print("WARNING: No known clients. Try re-running with --chronyd --sudo." . PHP_EOL);
 	} else {
 		print("WARNING: No known clients." . PHP_EOL);
 	}
 
-} elseif( count($stale_clients) ) {
+} elseif(count($stale_clients)) {
 	$return_status = 1;
 	$stale_count = count($stale_clients);
-	print( "$stale_count stale clients:" . PHP_EOL . PHP_EOL);
-	foreach( $stale_clients as $key => $value ) {
+	print("$stale_count stale clients:" . PHP_EOL . PHP_EOL);
+	foreach($stale_clients as $key => $value) {
 		$client = $key;
 		$seconds = $value;
 		$humantime = humantime($seconds);
 		$domain = gethostbyaddr($client);
-		print( "$domain stale for $humantime" . PHP_EOL);
+		print("$domain stale for $humantime" . PHP_EOL);
 	}
 	print(PHP_EOL. "If this is ok, add the client to the ignore list (recommended), or restart $source_daemon to clear all known clients." . PHP_EOL);
 
