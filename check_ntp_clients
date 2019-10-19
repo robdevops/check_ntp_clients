@@ -18,15 +18,15 @@
 
 function humantime($remainder) {
 	$return = '';
-	$denominator[0] = [60, 'minute'];
-	$denominator[1] = [3600, 'hour'];
-	$denominator[2] = [86400, 'day'];
+	$unit[0] = [60, 'minute'];
+	$unit[1] = [3600, 'hour'];
+	$unit[2] = [86400, 'day'];
 
 	for($i = 2; $i > -1; $i--) {
-		 $filled[$i] = intval($remainder / $denominator[$i][0]);
-		 $remainder -= ($filled[$i] * $denominator[$i][0]);
+		 $filled[$i] = intval($remainder / $unit[$i][0]);
+		 $remainder -= ($filled[$i] * $unit[$i][0]);
 		 if($filled[$i] != 0) {
-			$return .= abs($filled[$i]) . ' ' . $denominator[$i][1] . (($filled[$i] > 1) ? 's' : '') . ' ';
+			$return .= abs($filled[$i]) . ' ' . $unit[$i][1] . (($filled[$i] > 1) ? 's' : '') . ' ';
 		 }
 	}
 	return $return;
