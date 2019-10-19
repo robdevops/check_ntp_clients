@@ -12,7 +12,7 @@
 *	- for chronyd, requires running as root or using --sudo option.
 *	- sudo option requires sudoers to allow '/usr/bin/chronyc -c clients'
 *
-*future plans:
+* future plans:
 *	- verify ipv6 support
 */
 
