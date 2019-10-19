@@ -25,7 +25,7 @@ Options:
 -h, --help              This help.
 -i, --ignore            Client to ignore. Can be specified multiple times.
 -p, --ping              Ignore any stale clients which don't respond to pings.
--s, --sudo              Use sudo for chrony. Sudoers must allow '/usr/bin/chronyc -c clients'.
+-s, --sudo              Call chronyc with sudo. Sudoers must allow '/usr/bin/chronyc -c clients'.
 -t, --threshold         Warning threshold. Minimum 60. Defaults to two days.
 ```
 
