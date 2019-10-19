@@ -14,7 +14,7 @@ This test is designed to run on a private NTP server, and alerts about known NTP
 * ntpd or chronyd
     * For ntpd, `ntpdc -nc monlist` must return results. This requires "monitor" not set as disabled in ntpd config.
     * For chronyd, `chronyc -c clients` must return results. This requires running it as root, or with the `--sudo` option.
-        * The `--sudo` option requires a sudo config so the test user can run `sudo /usr/bin/chronyc -c clients`.
+        * The `--sudo` option requires sudo config allowing `sudo /usr/bin/chronyc -c clients`.
 
 ## Usage
 ```
