@@ -35,21 +35,18 @@ check_ntp_clients -s ntpsec -w 43200
 ```
 
 ### Example output
+
+Normal state:
 ```
 OK: 149 known clients.
-
-echo $?
-0
 ```
 
+Warning state:
 ```
-1 stale clients:
+WARN: 1 stale clients:
 
 host.example.com stale for 2 days 3 hours 29 minutes
 
 If this is ok, add the client to the ignore list (recommended), or restart ntpd to clear all known clients.
-
-echo $?
-1
 ```
 
