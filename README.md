@@ -1,8 +1,8 @@
 # check_ntp_clients
-`check_ntp_clients` plugin for Icinga and Nagios. Warns about stale clients known to `ntpd`, `ntpsec` or `chrony` NTP servers.
+`check_ntp_clients` is a plugin for Icinga and Nagios. It warns about stale clients known to NTP servers.
 
 ## Description
-This test is designed to run on a private NTP server, and alerts about known NTP clients we haven't heard from in a while. Supports chrony, ntpsec and ntpd classic.
+This test is designed to run on a private NTP server, and alerts about known NTP clients we haven't heard from in a while. It supports `chrony`, `ntpsec` and `ntpd classic` NTP servers.
 
 ## Limitations
 * This test uses runtime network statistics counters to discover clients. This means the client list is cleared when ntpd or chronyd are restarted, making it possible to miss a stale client if the server is restarted at an unfortunate time. It is recommended to compliment this test with `check_ntp_time` (from the `nagios-plugins-ntp` or `monitoring-plugins-basic` packages) on each client.
@@ -11,7 +11,7 @@ This test is designed to run on a private NTP server, and alerts about known NTP
 
 ## Requirements
 * php 5.4 or greater
-* ntpd classic, ntpsec or chrony
+* chrony, ntpsec, or ntpd classic
     * For ntpd classic, `ntpdc -nc monlist` must return results. This requires "monitor" not set as disabled in ntpd config.
     * For ntpsec, `ntpq -nc mrulist` must return results. This requires "monitor" not set as disabled in ntpd config.
     * For chrony, `chronyc -c clients` must return results. This requires running it as root, or with the `--sudo` option.
@@ -25,7 +25,7 @@ Options:
 -h, --help              This help.
 -i, --ignore            Client to ignore. Can be specified multiple times.
 -p, --ping              Ping stale clients, ignore any which do not respond.
--s, --source            Source daemon (ntpd, chrony, ntpsec). REQUIRED.
+-s, --source            Source daemon (chrony, ntpsec, or ntpd). REQUIRED.
 -S, --sudo              Use sudo for chrony source. Sudoers must allow '/usr/bin/chronyc -c clients'.
 -w, --warning           Warning threshold. Minimum 60. Defaults to two days.
 
