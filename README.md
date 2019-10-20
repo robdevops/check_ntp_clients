@@ -45,7 +45,7 @@ Warning state:
 ```
 WARN: 1 stale clients:
 
-host.example.com stale for 2 days 3 hours 29 minutes
+host.example.com stale for 1 day 2 hours 29 minutes
 
 If this is ok, add the client to the ignore list (recommended), or restart ntpd to clear all known clients.
 ```
