@@ -12,7 +12,8 @@ This test is designed to run on a private NTP server, and alerts about known NTP
 ## Requirements
 * php 5.4 or greater
 * ntpd classic, ntpsec or chrony
-    * For ntpd, `ntpdc -nc monlist` must return results. This requires "monitor" not set as disabled in ntpd config.
+    * For ntpd classic, `ntpdc -nc monlist` must return results. This requires "monitor" not set as disabled in ntpd config.
+    * For ntpsec, `ntpq -nc mrulist` must return results. This requires "monitor" not set as disabled in ntpd config.
     * For chrony, `chronyc -c clients` must return results. This requires running it as root, or with the `--sudo` option.
         * The `--sudo` option requires sudo config allowing `sudo /usr/bin/chronyc -c clients`.
 
