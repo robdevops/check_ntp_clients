@@ -28,7 +28,7 @@ $options = getopt($shortopts, $longopts);
 
 // help
 if(isset($options['h']) or isset($options['help'])) {
-	echo "Usage: $me -s <chrony|ntpsec|ntpd> [-hpu] [-i IP_ADDRESS] [-w SECONDS]
+	echo "Usage: $me -s <SOURCE> [-hpu] [-i IP_ADDRESS] [-w SECONDS]
 
 Options:
 -h, --help\t\tThis help.
@@ -56,7 +56,7 @@ if(isset($options['s']) and isset($options['source'])) {
 	$source = $options['source'];
 
 } else {
-	print("You must specifiy a source daemon: --source <ntpd|ntpsec|chrony>. See -h for help." . PHP_EOL);
+	print("You must specifiy a source daemon. See -h for help." . PHP_EOL);
 	exit(3);
 }
 
