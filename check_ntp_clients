@@ -245,6 +245,7 @@ if(empty($output)) {
 
 } elseif(count($stale_clients)) {
 	$return_status = 1;
+	$clientcount = count($fresh_clients);
 	$stale_count = count($stale_clients);
 	print("WARN: $stale_count stale clients:" . PHP_EOL . PHP_EOL);
 	foreach($stale_clients as $key => $value) {
