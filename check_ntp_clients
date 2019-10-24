@@ -240,7 +240,7 @@ if(empty($output)) {
 	if($source === 'chrony' and $whoami !== 'root') {
 		print("WARNING: No known clients. Try re-running with --sudo. See -h for help." . PHP_EOL);
 	} else {
-		print("WARNING: No known clients." . PHP_EOL);
+		print("WARNING: No known clients. |clients=0;;;" . PHP_EOL);
 	}
 
 } elseif(count($stale_clients)) {
@@ -254,12 +254,12 @@ if(empty($output)) {
 		$domain = gethostbyaddr($client);
 		print("$domain stale for $humantime" . PHP_EOL);
 	}
-	print(PHP_EOL. "If this is ok, add the client to the ignore list (recommended), or restart $source to clear all known clients." . PHP_EOL);
+	print(PHP_EOL. "If this is ok, add the client to the ignore list (recommended), or restart $source to clear all known clients. |clients=$clientcount;;;" . PHP_EOL);
 
 } else {
 	$return_status = 0;
 	$clientcount = count($fresh_clients);
-	print("OK: $clientcount known clients." . PHP_EOL);
+	print("OK: $clientcount known clients. |clients=$clientcount;;;" . PHP_EOL);
 }
 
 exit($return_status);
