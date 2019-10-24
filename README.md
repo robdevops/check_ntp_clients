@@ -4,6 +4,8 @@
 ## Description
 This test is designed to run on a private NTP server, and alerts about known NTP clients we haven't heard from in a while. It supports `chrony`, `ntpsec` and `ntpd classic` time daemons.
 
+It also returns _performance data_ with the number of fresh clients.
+
 ## Limitations
 * This test uses runtime network statistics counters to discover clients. This means the client list is cleared when ntpd or chronyd are restarted, making it possible to miss a stale client if the server is restarted at an unfortunate time. It is recommended to compliment this test with `check_ntp_time` (from the `nagios-plugins-ntp` or `monitoring-plugins-basic` packages) on each client.
 
@@ -38,7 +40,7 @@ check_ntp_clients -s ntpsec -w 43200
 
 Normal state:
 ```
-OK: 149 known clients.
+OK: 141 known clients. |clients=141;;;
 ```
 
 Warning state:
@@ -47,6 +49,6 @@ WARN: 1 stale clients:
 
 host.example.com stale for 1 day 2 hours 29 minutes
 
-If this is ok, add the client to the ignore list (recommended), or restart ntpd to clear all known clients.
+If this is ok, add the client to the ignore list (recommended), or restart chrony to clear all known clients. |clients=72;;;
 ```
 
