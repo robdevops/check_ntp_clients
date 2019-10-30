@@ -95,10 +95,12 @@ if($source === 'chrony') {
 // ignore list
 $ignore = ['127.0.0.1', '::1'];
 if(isset($options['i'])) {
-	$ignore = array_merge($ignore, [$options['i']]);
+	$ignore_flatten = array_merge(...[$options['i']]);
+	$ignore = array_merge($ignore, $ignore_flatten);
 }
 if(isset($options['ignore'])) {
-	$ignore = array_merge($ignore, [$options['ignore']]);
+	$ignore_flatten = array_merge(...[$options['ignore']]);
+	$ignore = array_merge($ignore, $ignore_flatten);
 }
 
 // ping option
